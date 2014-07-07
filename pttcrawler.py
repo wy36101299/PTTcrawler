@@ -5,7 +5,6 @@ import requests
 from time import sleep
 from bs4 import BeautifulSoup  
 
-# l=[]
 def crawler(start,end):
 	page = start; times = end-start+1; g_id = 0;
 	for a in range(times):
@@ -67,15 +66,18 @@ def parseGos(link , g_id):
 	# json-data
 	d={ "a_ID":g_id , "b_作者":author , "c_標題":title , "d_日期":date , "e_ip":ip , "f_內文":content , "g_推文":message, "h_推文總數":messageNum }
 	json_data = json.dumps(d,ensure_ascii=False,indent=4,sort_keys=True)+','
+	
 	store(json_data) 
-	# store(',') 
 	
 def store(data):
     with open('./PTTcrawler/data.json', 'a') as f:
         f.write(data)
 
 store('[') 
+
 crawler(int(sys.argv[1]),int(sys.argv[2]))
+
+
 store(']') 
 with open('./PTTcrawler/data.json', 'r') as f:
 	p = f.read()
