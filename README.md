@@ -31,3 +31,18 @@ json的格式如下
 --------------
 
     $ python pttcrawler.py start end
+
+    start 和 end 是網址index的數字
+    https://www.ptt.cc/bbs/Gossiping/index.html
+    可自由決定要爬取的index範圍
+    example
+
+--------------
+
+    $ python pttcrawler.py 200 500
+    
+    則會爬取
+    https://www.ptt.cc/bbs/Gossiping/index200.html 至
+    https://www.ptt.cc/bbs/Gossiping/index500.html
+    之間的內容。
+    
