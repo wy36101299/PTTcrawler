@@ -70,7 +70,7 @@ def parseGos(link , g_id):
 	store(json_data) 
 	
 def store(data):
-    with open('./PTTcrawler/data.json', 'a') as f:
+    with open('data.json', 'a') as f:
         f.write(data)
 
 store('[') 
@@ -79,7 +79,7 @@ crawler(int(sys.argv[1]),int(sys.argv[2]))
 
 
 store(']') 
-with open('./PTTcrawler/data.json', 'r') as f:
+with open('data.json', 'r') as f:
 	p = f.read()
-with open('./PTTcrawler/data.json', 'w') as f:
+with open('data.json', 'w') as f:
 	f.write(p.replace(',]',']'))
