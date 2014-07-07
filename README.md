@@ -6,8 +6,6 @@ A crawler for web PTT Gossiping
 ptt八卦版的網路爬蟲，解析其中資料，爬完會自動產生 data.json 
 json的格式如下
 
-{
-
     "a_ID": 編號,
     "b_作者": 作者名,
     "c_標題": 標題,
@@ -28,5 +26,5 @@ json的格式如下
         "g": 推數,
         "n": →數
     }
-    
-}
+
+#如何使用
