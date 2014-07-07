@@ -28,3 +28,6 @@ json的格式如下
     }
 
 ###如何使用
+--------------
+
+    $ python pttcrawler.py start end
