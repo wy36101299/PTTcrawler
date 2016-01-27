@@ -1,9 +1,16 @@
-PTTcrawler
-==========
+# PTTcrawler (PTT文章爬蟲)
 
-A crawler for web PTT Gossiping
+A crawler for web PTT 
 
-ptt八卦版的網路爬蟲，解析其中資料，爬完會自動產生 data.json，格式如下
+PTT文章爬蟲
+* [Demo Video](https://www.youtube.com/watch?v=qq3kuDU3k50&feature=youtu.be) - Linux
+
+特色
+* 抓取PTT 文章
+
+輸出格式
+    輸出 .json，格式如下
+ 
 
     "a_ID": 編號,
     "b_作者": 作者名,
@@ -25,25 +32,21 @@ ptt八卦版的網路爬蟲，解析其中資料，爬完會自動產生 data.js
         "g": 推數,
         "n": →數
     }
-###執行環境
-python 3.x
-
-###如何使用
---------------
-
-    $ python3 pttcrawler.py start end
-
-start 和 end 是網址index的數字
-https://www.ptt.cc/bbs/Gossiping/index.html
-可自由決定要爬取的index範圍
-
-###example
---------------
-
-    $ python3 pttcrawler.py 200 500
     
-則會爬取
-https://www.ptt.cc/bbs/Gossiping/index200.html 至
-https://www.ptt.cc/bbs/Gossiping/index500.html
-之間的內容。
+    
+###執行環境
+Python 2.7.3
+
+### 執行方法
+
+    $ python pttcrawler.py [版名]  [抓取頁數]
+    
+### 範例
+  爬PTT Gossiping版 2頁 文章內容
+
+    $ python pttcrawler.py  Gossiping  2
+    
+  假設總共有100頁，則會爬取
+  
+  https://www.ptt.cc/bbs/Gossiping/index100.html 至 https://www.ptt.cc/bbs/Gossiping/index101.html 之間的內容。
     
