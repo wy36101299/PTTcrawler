@@ -1,85 +1,145 @@
+#coding=utf-8 
 import re
 import sys
 import json
 import requests
+import io
+import random
 from time import sleep
+from datetime import datetime
 from bs4 import BeautifulSoup  
+requests.packages.urllib3.disable_warnings()
 
-def crawler(start,end):
-	page = start; times = end-start+1; g_id = 0;
-	for a in range(times):
-		print('index is '+ str(page))
-		resp = requests.get(
-		url="http://www.ptt.cc/bbs/Gossiping/index"+str(page)+".html", 
-		cookies={"over18": "1"}
-		)
-		soup = BeautifulSoup(resp.text)
-		for tag in soup.find_all("div","r-ent"):
-			try:
-				link = str(tag.find_all("a"))
-				link = link.split("\"")
-				link = "http://www.ptt.cc"+link[1]
-				g_id = g_id+1
-				parseGos(link,g_id)
-			except:
-			    pass
-		sleep(0.2)
-		page += 1
+PttName=""
+load={
+'from':'/bbs/'+PttName+'/index.html',
+'yes':'yes' 
+}
+
+rs=requests.session()
+res=rs.post('https://www.ptt.cc/ask/over18',verify=False,data=load)
+FILENAME=""
+
+def PageCount(PttName):
+    res=rs.get('https://www.ptt.cc/bbs/'+PttName+'/index.html',verify=False)
+    soup=BeautifulSoup(res.text,'html.parser')
+    ALLpageURL = soup.select('.btn.wide')[1]['href']
+    ALLpage=int(getPageNumber(ALLpageURL))+1
+    return  ALLpage 
+
+def crawler(PttName,ParsingPage):
+        ALLpage=PageCount(PttName)
+        g_id = 0;
+ 
+	for number  in range(ALLpage, ALLpage-int(ParsingPage),-1):
+            res=rs.get('https://www.ptt.cc/bbs/'+PttName+'/index'+str(number)+'.html',verify=False)
+            soup = BeautifulSoup(res.text,'html.parser')
+	    for tag in soup.select('div.title'):
+		try:
+                    atag=tag.find('a')
+                    time=random.uniform(0, 1)/5
+                    #print 'time:',time
+                    sleep(time)
+                    if(atag):
+                       URL=atag['href']   
+                       link='https://www.ptt.cc'+URL
+                       #print link
+	               g_id = g_id+1
+		       parseGos(link,g_id)                     
+		except:
+                    print 'error:',URL
+ 
 def parseGos(link , g_id):
-	resp = requests.get(url=str(link),cookies={"over18":"1"})
-	soup = BeautifulSoup(resp.text)
-	print(resp)
-	# author
-	author  = soup.find(id="main-container").contents[1].contents[0].contents[1].string.replace(' ', '')
-	# title
-	title = soup.find(id="main-container").contents[1].contents[2].contents[1].string.replace(' ', '')
-	# date
-	date = soup.find(id="main-container").contents[1].contents[3].contents[1].string
-	# ip
-	try:
-		ip = soup.find(text=re.compile("※ 發信站:"))
-		ip = re.search("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*",str(ip)).group()
-	except:
-		ip = "ip is not find"
-	# content
-	a = str(soup.find(id="main-container").contents[1])
-	a = a.split("</div>")
-	a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc),")
-	content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
-	# message
-	num , all , g , b , n ,message = 0,0,0,0,0,{}
-	for tag in soup.find_all("div","push"):
-		num += 1
-		push_tag = tag.find("span","push-tag").string.replace(' ', '')
-		push_userid = tag.find("span","push-userid").string.replace(' ', '')
-		push_content = tag.find("span","push-content").string.replace(' ', '').replace('\n', '').replace('\t', '')
-		push_ipdatetime = tag.find("span","push-ipdatetime").string.replace('\n', '')
+        res=rs.get(link,verify=False)
+        soup = BeautifulSoup(res.text,'html.parser')
+        # author
+        author  = soup.select('.article-meta-value')[0].text
+        #author = soup.find("span", {'class': 'article-meta-value'}).text              
+        #print 'author:',author
+        # title
+        title = soup.select('.article-meta-value')[2].text
+        #print 'title:',title
+        # date
+        date = soup.select('.article-meta-value')[3].text
+        #print 'date:',date
+        # ip       
+        try:
+                targetIP=u'※ 發信站: 批踢踢實業坊'
+                ip =  soup.find(string = re.compile(targetIP))
+                ip = re.search(r"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*",ip).group()
+        except:
+                ip = "ip is not find"
+        #print 'ip:',ip
 
-		message[num]={"狀態":push_tag,"留言者":push_userid,"留言內容":push_content,"留言時間":push_ipdatetime}
-		if push_tag == '推 ':
-			g += 1
-		elif push_tag == '噓 ':
-			b += 1
-		else:
-			n += 1			
-	messageNum = {"g":g,"b":b,"n":n,"all":num}
-	# json-data
-	d={ "a_ID":g_id , "b_作者":author , "c_標題":title , "d_日期":date , "e_ip":ip , "f_內文":content , "g_推文":message, "h_推文總數":messageNum }
-	json_data = json.dumps(d,ensure_ascii=False,indent=4,sort_keys=True)+','
-	
+        # content
+        content = soup.find(id="main-content").text
+        target_content=u'※ 發信站: 批踢踢實業坊(ptt.cc),'
+        content = content.split(target_content)
+        content = content[0].split(date)
+        main_content = content[1].replace('\n', '  ').replace('\t', '  ')
+        #print 'content:',main_content
+        
+        # message
+        num , g , b , n ,message = 0,0,0,0,{}
+        for tag in soup.select('div.push'):
+                num += 1
+                push_tag = tag.find("span", {'class': 'push-tag'}).text
+                #print "push_tag:",push_tag
+                push_userid = tag.find("span", {'class': 'push-userid'}).text       
+                #print "push_userid:",push_userid
+                push_content = tag.find("span", {'class': 'push-content'}).text   
+                push_content = push_content[1:]
+                #print "push_content:",push_content
+                push_ipdatetime = tag.find("span", {'class': 'push-ipdatetime'}).text   
+                push_ipdatetime = remove(push_ipdatetime, '\n')
+                #print "push-ipdatetime:",push_ipdatetime 
+                
+                message[num]={"狀態":push_tag.encode('utf-8'),"留言者":push_userid.encode('utf-8'),
+                              "留言內容":push_content.encode('utf-8'),"留言時間":push_ipdatetime.encode('utf-8')}
+                if push_tag == u'推 ':
+                        g += 1
+                elif push_tag == u'噓 ':
+                        b += 1
+                else:
+                        n += 1
+  
+        messageNum = {"g":g,"b":b,"n":n,"all":num}
+        # json-data  type(d) dict
+          
+        d={ "a_ID":g_id , "b_作者":author.encode('utf-8'), "c_標題":title.encode('utf-8'), "d_日期":date.encode('utf-8'),
+            "e_ip":ip.encode('utf-8'), "f_內文":main_content.encode('utf-8'), "g_推文":message,"h_推文總數":messageNum}
+        json_data = json.dumps(d,ensure_ascii=False,indent=4,sort_keys=True)+','
 	store(json_data) 
-	
+
 def store(data):
-    with open('data.json', 'a') as f:
+    with open(FILENAME, 'a') as f:
         f.write(data)
+     
+def remove(value, deletechars):
+    for c in deletechars:
+        value = value.replace(c,'')
+    return value.rstrip();
+   
 
-store('[') 
+def getPageNumber(content) :
+    startIndex = content.find('index')
+    endIndex = content.find('.html')
+    pageNumber = content[startIndex+5 : endIndex]
+    return pageNumber
 
-crawler(int(sys.argv[1]),int(sys.argv[2]))
+if __name__ == "__main__":  
+   PttName = str(sys.argv[1])
+   ParsingPage = int(sys.argv[2])
+   FILENAME='data-'+PttName+'-'+datetime.now().strftime('%Y-%m-%d-%H-%M-%S')+'.json'
+   store('[') 
+   print 'Start parsing [',PttName,']....'
+   crawler(PttName,ParsingPage)
+   store(']') 
+   
 
-
-store(']') 
-with open('data.json', 'r') as f:
-	p = f.read()
-with open('data.json', 'w') as f:
-	f.write(p.replace(',]',']'))
+   with open(FILENAME, 'r') as f:
+        p = f.read()
+   with open(FILENAME, 'w') as f:
+        #f.write(p.replace(',]',']'))
+        f.write(p[:-2]+']')   
+ 
